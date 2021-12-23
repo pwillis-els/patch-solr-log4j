@@ -5,6 +5,10 @@ set -e -u
 [ "${DEBUG:-0}" = "1" ] && set -x
 DRYRUN=0 # Set to 1 to prevent removing/copying files
 
+# You can replace CHECKSUM_TOOL with anything that outputs a checksum
+# as the first word of output, like md5sum
+CHECKSUM_TOOL="${CHECKSUM_TOOL:-sha256sum}"
+
 if [ $# -lt 2 ] ; then
     cat <<EOUSAGE
 Usage: $0 LOG4J_DIR TARGET_DIR
@@ -24,17 +28,21 @@ for jar in $TARGET_JARS ; do
     target_bn="$(basename "$jar" .jar)"
     libname="$(echo "$target_bn" | sed -e 's/^\(.*\)-\([0-9]\+\.[0-9]\+\.[0-9]\+\)/\1/')"
     libver="$(echo "$target_bn" | sed -e 's/^\(.*\)-\([0-9]\+\.[0-9]\+\.[0-9]\+\)/\2/')"
-    echo "$0: Found $libname version $libver ($jar)"
+    echo "$0: Found target jar $libname v$libver ($jar)"
 
     detected_jar="$(find "$LOG4J_DIR/" -type f -iname '*.jar' | grep -e "\/\?$libname-[0-9]\+\.[0-9]\+\.[0-9]\+\.jar$")"
-    if [ ! -n "$detected_jar" ] || [ "$(echo "$detected_jar" | wc -l)" -gt 1 ] ; then
+    if [ -z "$detected_jar" ] || [ "$(echo "$detected_jar" | wc -l)" -gt 1 ] ; then
         echo "$0: ERROR: Could not detect log4j jar file matching name '$libname'"
     else
-        echo "$0: Detected jar file '$detected_jar'"
-        echo "$0: Replacing jar '$jar' with '$detected_jar'"
-        if [ "$DRYRUN" = "0" ] ; then
-            rm -f "$jar"
-            cp -f "$detected_jar" "$target_dn/"
+        echo "$0: Detected log4j jar file '$detected_jar'"
+        if [ "$($CHECKSUM_TOOL "$jar"|awk '{print $1}')" = "$($CHECKSUM_TOOL "$detected_jar"|awk '{print $1}')" ] ; then
+            echo "$0: File already updated"
+        else
+            echo "$0: Replacing jar '$jar' with '$detected_jar'"
+            if [ "$DRYRUN" = "0" ] ; then
+                rm -f "$jar"
+                cp -f "$detected_jar" "$target_dn/"
+            fi
         fi
     fi
 done
