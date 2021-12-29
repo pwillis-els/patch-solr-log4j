@@ -10,7 +10,7 @@ LOG4J_VERSION="${LOG4J_VERSION:-2.16.0}"
 [ -e "apache-log4j-${LOG4J_VERSION}-bin.tar.gz" ] || \
     curl -fSL \
         -o "apache-log4j-${LOG4J_VERSION}-bin.tar.gz" \
-        "https://dlcdn.apache.org/logging/log4j/${LOG4J_VERSION}/apache-log4j-${LOG4J_VERSION}-bin.tar.gz"
+        "https://archive.apache.org/dist/logging/log4j/${LOG4J_VERSION}/apache-log4j-${LOG4J_VERSION}-bin.tar.gz"
 
 rm -rf "apache-log4j-${LOG4J_VERSION}-bin/"
 tar -xvzf "apache-log4j-${LOG4J_VERSION}-bin.tar.gz"
